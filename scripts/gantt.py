@@ -225,7 +225,7 @@ class Gantt:
             )
 
         # 调整坐标轴
-        self.ax.set_xlim(0, max(pkg.end for pkg in self.packages))
+        self.ax.set_xlim(0, max(max(pkg.end for pkg in self.packages), self.current_time))
         self.ax.set_ylim(0.5, len(unique_labels) + 0.5)
         self.ax.set_yticks(list(label_to_y.values()))
         self.ax.set_yticklabels(list(label_to_y.keys()))
