@@ -14,6 +14,9 @@ import matplotlib.pyplot as plt
 from matplotlib import rc
 import rospy
 from std_srvs.srv import Trigger, TriggerResponse
+import cv2
+from cv_bridge import CvBridge
+from sensor_msgs.msg import Image
 
 # TeX support: on Linux assume TeX in /usr/bin, on OSX check for texlive
 if (platform.system() == "Darwin") and "tex" in os.getenv("PATH"):
@@ -76,22 +79,46 @@ class Gantt:
     """Gantt
     Class to render a simple Gantt chart, with optional milestones
     """
+
     def __init__(self):
         self.gantt_client = rospy.ServiceProxy("/robots_gantt", Trigger)
         self.gantt_client.wait_for_service()
-        plt.ion()
-        # init figure
-        self.fig, self.ax = plt.subplots(figsize=(15, 4))
-        self.ax.xaxis.grid(True)
-        self.ax.yaxis.grid(False)
-        while not rospy.is_shutdown():
-            data: TriggerResponse = self.gantt_client()
-            if data.success:
-                plt.cla()
-                self.set_gantt(data.message)
-                plt.pause(1)
-            else:
-                plt.pause(1)
+        self.plot_mode = rospy.get_param("~plot_mode", "window")
+        if self.plot_mode == "window":
+            plt.ion()
+            # init figure
+            self.fig, self.ax = plt.subplots(figsize=(15, 4))
+            self.ax.xaxis.grid(True)
+            self.ax.yaxis.grid(False)
+            while not rospy.is_shutdown():
+                data: TriggerResponse = self.gantt_client()
+                if data.success:
+                    plt.cla()
+                    self.set_gantt(data.message)
+                    plt.pause(1)
+                else:
+                    plt.pause(1)
+        elif self.plot_mode == "publish":
+            image_pub = rospy.Publisher("/gantt_image", Image, queue_size=10)
+            self.log_dir = rospy.get_param("~log_dir", "")
+            if self.log_dir == "":
+                raise ValueError("log_dir must be set in 'publish' mode")
+            bridge = CvBridge()
+            # init figure
+            self.fig, self.ax = plt.subplots(figsize=(15, 4))
+            self.ax.xaxis.grid(True)
+            self.ax.yaxis.grid(False)
+            while not rospy.is_shutdown():
+                data: TriggerResponse = self.gantt_client()
+                if data.success:
+                    plt.cla()
+                    self.set_gantt(data.message)
+                    save_path = f"{self.log_dir}/GANTT.png"
+                    Gantt.save(save_path)
+                    cv_image = cv2.imread(save_path)
+                    ros_image = bridge.cv2_to_imgmsg(cv_image, encoding="bgr8")
+                    image_pub.publish(ros_image)
+                rospy.sleep(1)
 
     def set_gantt(self, dataFile):
         """Instantiation
@@ -120,7 +147,6 @@ class Gantt:
 
         # load data
         data = json.loads(self.dataFile)
-
 
         # must-haves
         self.title = data["title"]
@@ -195,7 +221,7 @@ class Gantt:
         if self.xticks:
             plt.xticks(self.xticks, map(str, self.xticks))
 
-    def render(self, frame = 0):
+    def render(self, frame=0):
         """Prepare data for plotting, supporting multiple blocks per line"""
 
         # 获取所有包的 label，并保留顺序
@@ -225,7 +251,9 @@ class Gantt:
             )
 
         # 调整坐标轴
-        self.ax.set_xlim(0, max(max(pkg.end for pkg in self.packages), self.current_time))
+        self.ax.set_xlim(
+            0, max(max(pkg.end for pkg in self.packages), self.current_time)
+        )
         self.ax.set_ylim(0.5, len(unique_labels) + 0.5)
         self.ax.set_yticks(list(label_to_y.values()))
         self.ax.set_yticklabels(list(label_to_y.keys()))
@@ -305,4 +333,5 @@ class Gantt:
 
 
 if __name__ == "__main__":
+    rospy.init_node("gantt", anonymous=True)
     Gantt()
