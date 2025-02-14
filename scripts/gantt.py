@@ -105,7 +105,7 @@ class Gantt:
                 raise ValueError("log_dir must be set in 'publish' mode")
             bridge = CvBridge()
             # init figure
-            self.fig, self.ax = plt.subplots(figsize=(15, 4))
+            self.fig, self.ax = plt.subplots(figsize=(15, 3))
             self.ax.xaxis.grid(True)
             self.ax.yaxis.grid(False)
             while not rospy.is_shutdown():
