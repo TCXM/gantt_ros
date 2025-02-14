@@ -276,7 +276,7 @@ class Gantt:
                 ncol=1,
                 fontsize="medium",
                 loc="upper left",
-                bbox_to_anchor=(1, 1),
+                bbox_to_anchor=(0, 1),
             )
 
     def add_current_time_line(self):
