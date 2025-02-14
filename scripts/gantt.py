@@ -87,12 +87,10 @@ class Gantt:
         while not rospy.is_shutdown():
             data: TriggerResponse = self.gantt_client()
             if data.success:
-                print("Received Gantt data")
                 plt.cla()
                 self.set_gantt(data.message)
                 plt.pause(1)
             else:
-                print("No Gantt data received")
                 plt.pause(1)
 
     def set_gantt(self, dataFile):
