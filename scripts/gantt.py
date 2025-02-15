@@ -74,6 +74,15 @@ class Package:
         except KeyError:
             self.name = None
 
+        try:
+            self.label_color = pkg["label_color"]
+        except KeyError:
+            self.label_color = "black"
+        
+        try:
+            self.hatch = pkg["hatch"]
+        except KeyError:
+            self.hatch = None
 
 class Gantt:
     """Gantt
@@ -233,10 +242,11 @@ class Gantt:
         # 绘制每个包，多个包共用同一 label 的 y 坐标
         self.barlist = []
         for pkg in self.packages:
+            pkg: Package
             y = label_to_y[pkg.label]
             width = pkg.end - pkg.start
             bar = self.ax.barh(
-                y, width, left=pkg.start, height=0.5, color=pkg.color, align="center"
+                y, width, left=pkg.start, height=0.5, color=pkg.color, align="center", hatch=pkg.hatch
             )
             self.barlist.append(bar)
             # Add task_name text
@@ -248,6 +258,7 @@ class Gantt:
                 ha="center",
                 color="black",
                 fontsize=10,
+                fontweight="bold",
             )
 
         # 调整坐标轴
@@ -257,6 +268,8 @@ class Gantt:
         self.ax.set_ylim(0.5, len(unique_labels) + 0.5)
         self.ax.set_yticks(list(label_to_y.values()))
         self.ax.set_yticklabels(list(label_to_y.keys()))
+        for label in self.ax.get_yticklabels():
+            label.set_color(self.packages[unique_labels.index(label.get_text())].label_color)
         self.ax.set_title(self.title)
         if self.xlabel:
             self.ax.set_xlabel(self.xlabel)
