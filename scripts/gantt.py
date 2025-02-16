@@ -310,6 +310,8 @@ class Gantt:
 
         if handles:
             handles = {k: v for k, v in reversed(list(handles.items()))}
+            if len(handles) > 10:
+                 handles = dict(list(handles.items())[:10])
             self.ax.legend(
                 handles.values(),
                 handles.keys(),
