@@ -65,6 +65,11 @@ class Package:
             self.color = DEFCOLOR
 
         try:
+            self.name_color = pkg["name_color"]
+        except KeyError:
+            self.name_color = "black"
+
+        try:
             self.legend = pkg["legend"]
         except KeyError:
             self.legend = None
@@ -78,11 +83,12 @@ class Package:
             self.label_color = pkg["label_color"]
         except KeyError:
             self.label_color = "black"
-        
+
         try:
             self.hatch = pkg["hatch"]
         except KeyError:
             self.hatch = None
+
 
 class Gantt:
     """Gantt
@@ -246,7 +252,15 @@ class Gantt:
             y = label_to_y[pkg.label]
             width = pkg.end - pkg.start
             bar = self.ax.barh(
-                y, width, left=pkg.start, height=0.5, color=pkg.color, align="center", hatch=pkg.hatch
+                y,
+                width,
+                left=pkg.start,
+                height=0.5,
+                color=pkg.color,
+                align="center",
+                hatch=pkg.hatch,
+                edgecolor="gray",
+                linewidth=0
             )
             self.barlist.append(bar)
             # Add task_name text
@@ -256,7 +270,7 @@ class Gantt:
                 pkg.name,
                 va="center",
                 ha="center",
-                color="black",
+                color=pkg.name_color,
                 fontsize=10,
                 fontweight="bold",
             )
@@ -269,7 +283,9 @@ class Gantt:
         self.ax.set_yticks(list(label_to_y.values()))
         self.ax.set_yticklabels(list(label_to_y.keys()))
         for label in self.ax.get_yticklabels():
-            label.set_color(self.packages[unique_labels.index(label.get_text())].label_color)
+            label.set_color(
+                self.packages[unique_labels.index(label.get_text())].label_color
+            )
         self.ax.set_title(self.title)
         if self.xlabel:
             self.ax.set_xlabel(self.xlabel)
@@ -311,7 +327,7 @@ class Gantt:
         if handles:
             handles = {k: v for k, v in reversed(list(handles.items()))}
             if len(handles) > 10:
-                 handles = dict(list(handles.items())[:10])
+                handles = dict(list(handles.items())[:10])
             self.ax.legend(
                 handles.values(),
                 handles.keys(),
