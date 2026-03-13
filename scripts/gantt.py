@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # pylint: disable=R0902, R0903, C0103
 """
 Gantt.py is a simple class to render Gantt charts, as commonly used in
